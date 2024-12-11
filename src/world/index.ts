@@ -1,6 +1,6 @@
 import { SimplexNoise } from "three/examples/jsm/Addons.js";
 import { RNG } from "../lib/rng";
-import { Block } from "./block";
+import { Block, GenerativeBlocks } from "./block";
 
 interface WorldOptions {
   scale: number;
@@ -49,7 +49,11 @@ export class World {
 
   generate() {
     this.initialize();
+    this.generateResources();
+    this.generateTerrain();
+  }
 
+  private generateTerrain() {
     for (let x = 0; x < this.width; x++) {
       for (let z = 0; z < this.width; z++) {
         const noiseValue = this.primaryNoise.noise(
@@ -68,12 +72,41 @@ export class World {
           )
         );
 
-        for (let y = 0; y <= height; y++) {
-          const block = y === height ? Block.GRASS : Block.DIRT;
-          this.setBlock(x, y, z, block);
+        for (let y = 0; y < this.height; y++) {
+          if (y < height && this.getBlock(x, y, z) === Block.AIR) {
+            this.setBlock(x, y, z, Block.DIRT);
+          } else if (y === height) {
+            this.setBlock(x, y, z, Block.GRASS);
+          } else if (y > height) {
+            this.setBlock(x, y, z, Block.AIR);
+          }
         }
       }
     }
+  }
+
+  generateResources() {
+    // Generate each block type defined in GenerativeBlocks
+    Object.entries(GenerativeBlocks).forEach(([blockId, properties]) => {
+      const id = parseInt(blockId);
+      const { scale, scarcity } = properties;
+
+      for (let x = 0; x < this.width; x++) {
+        for (let y = 0; y < this.height; y++) {
+          for (let z = 0; z < this.width; z++) {
+            const noiseValue = this.primaryNoise.noise3d(
+              x / scale,
+              y / scale,
+              z / scale
+            );
+
+            if (noiseValue > scarcity) {
+              this.setBlock(x, y, z, id);
+            }
+          }
+        }
+      }
+    });
   }
 
   private isOutOfBounds(x: number, y: number, z: number): boolean {

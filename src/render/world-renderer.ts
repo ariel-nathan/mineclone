@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { World } from "../world";
-import { Block } from "../world/block";
+import { Block, BlockProperties } from "../world/block";
 
 export class WorldRenderer {
   private scene: THREE.Scene;
@@ -18,14 +18,14 @@ export class WorldRenderer {
   }
 
   private initializeMaterials() {
-    this.blockMaterials.set(
-      Block.GRASS,
-      new THREE.MeshLambertMaterial({ color: 0x55aa55 })
-    );
-    this.blockMaterials.set(
-      Block.DIRT,
-      new THREE.MeshLambertMaterial({ color: 0x825432 })
-    );
+    Object.entries(BlockProperties).forEach(([id, props]) => {
+      if (props.solid) {
+        this.blockMaterials.set(
+          parseInt(id),
+          new THREE.MeshLambertMaterial({ color: props.color })
+        );
+      }
+    });
   }
 
   public render() {
