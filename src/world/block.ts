@@ -1,8 +1,20 @@
+import * as THREE from "three";
+import { loadTexture } from "../lib/texture-loader";
+
 // Basic block properties that all blocks share
 interface BaseBlockProperties {
   name: string;
   solid: boolean;
-  color: number;
+  material:
+    | THREE.Material
+    | [
+        THREE.Material,
+        THREE.Material,
+        THREE.Material,
+        THREE.Material,
+        THREE.Material,
+        THREE.Material
+      ];
 }
 
 // Properties for blocks that can generate with patterns
@@ -35,15 +47,60 @@ export enum Block {
 // Type for blocks that can generate as ores
 type OreBlocks = Block.STONE | Block.IRON_ORE | Block.COAL_ORE;
 
+const textures = {
+  grass: await loadTexture("textures/grass.png"),
+  grassSide: await loadTexture("textures/grass_side.png"),
+  dirt: await loadTexture("textures/dirt.png"),
+  stone: await loadTexture("textures/stone.png"),
+  coalOre: await loadTexture("textures/coal_ore.png"),
+  ironOre: await loadTexture("textures/iron_ore.png"),
+};
+
 // Block definitions with their properties
 export const BlockProperties: Record<Block, BaseBlockProperties> = {
-  [Block.AIR]: { name: "Air", solid: false, color: 0x000000 },
-  [Block.GRASS]: { name: "Grass", solid: true, color: 0x55aa55 },
-  [Block.DIRT]: { name: "Dirt", solid: true, color: 0x825432 },
-  [Block.STONE]: { name: "Stone", solid: true, color: 0x999999 },
-  [Block.IRON_ORE]: { name: "Iron Ore", solid: true, color: 0x995555 },
-  [Block.COAL_ORE]: { name: "Coal Ore", solid: true, color: 0x666666 },
-  [Block.WOOD]: { name: "Wood", solid: true, color: 0x6c4a1e },
+  [Block.AIR]: {
+    name: "Air",
+    solid: false,
+    material: new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 }),
+  },
+
+  [Block.GRASS]: {
+    name: "Grass",
+    solid: true,
+    material: [
+      new THREE.MeshLambertMaterial({ map: textures.grassSide }), // right
+      new THREE.MeshLambertMaterial({ map: textures.grassSide }), // left
+      new THREE.MeshLambertMaterial({ map: textures.grass }), // top
+      new THREE.MeshLambertMaterial({ map: textures.dirt }), // bottom
+      new THREE.MeshLambertMaterial({ map: textures.grassSide }), // front
+      new THREE.MeshLambertMaterial({ map: textures.grassSide }), // back
+    ],
+  },
+  [Block.DIRT]: {
+    name: "Dirt",
+    solid: true,
+    material: new THREE.MeshLambertMaterial({ map: textures.dirt }),
+  },
+  [Block.STONE]: {
+    name: "Stone",
+    solid: true,
+    material: new THREE.MeshLambertMaterial({ map: textures.stone }),
+  },
+  [Block.IRON_ORE]: {
+    name: "Iron Ore",
+    solid: true,
+    material: new THREE.MeshLambertMaterial({ map: textures.ironOre }),
+  },
+  [Block.COAL_ORE]: {
+    name: "Coal Ore",
+    solid: true,
+    material: new THREE.MeshLambertMaterial({ map: textures.coalOre }),
+  },
+  [Block.WOOD]: {
+    name: "Wood",
+    solid: true,
+    material: new THREE.MeshLambertMaterial({ color: 0x6c4a1e }),
+  },
 };
 
 // Generative properties for ores and terrain features

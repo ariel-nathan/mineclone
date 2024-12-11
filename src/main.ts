@@ -43,17 +43,19 @@ orbitControls.target.set(world.width / 2, world.height / 2, world.width / 2);
 // Light setup
 function setupLights() {
   const sun = new THREE.DirectionalLight();
-  sun.position.set(-50, 50, -50);
+  sun.position.set(50, 50, 50);
   sun.castShadow = true;
-  sun.shadow.camera.left = -50;
-  sun.shadow.camera.right = 50;
-  sun.shadow.camera.top = 50;
-  sun.shadow.camera.bottom = -50;
+  sun.shadow.camera.left = -100;
+  sun.shadow.camera.right = 100;
+  sun.shadow.camera.top = 100;
+  sun.shadow.camera.bottom = -100;
   sun.shadow.camera.near = 0.1;
   sun.shadow.camera.far = 100;
   sun.shadow.bias = -0.0005;
   sun.shadow.mapSize = new THREE.Vector2(512, 512);
   scene.add(sun);
+
+  // scene.add(new THREE.CameraHelper(sun.shadow.camera));
 
   const ambient = new THREE.AmbientLight();
   ambient.intensity = 0.1;

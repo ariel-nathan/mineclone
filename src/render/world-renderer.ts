@@ -6,26 +6,11 @@ export class WorldRenderer {
   private scene: THREE.Scene;
   private world: World;
   private meshes: THREE.InstancedMesh[];
-  private blockMaterials: Map<Block, THREE.MeshLambertMaterial>;
 
   constructor(scene: THREE.Scene, world: World) {
     this.scene = scene;
     this.world = world;
     this.meshes = [];
-    this.blockMaterials = new Map();
-
-    this.initializeMaterials();
-  }
-
-  private initializeMaterials() {
-    Object.entries(BlockProperties).forEach(([id, props]) => {
-      if (props.solid) {
-        this.blockMaterials.set(
-          parseInt(id),
-          new THREE.MeshLambertMaterial({ color: props.color })
-        );
-      }
-    });
   }
 
   public render() {
@@ -47,10 +32,16 @@ export class WorldRenderer {
     }
 
     // Create instanced meshes
-    this.blockMaterials.forEach((material, blockType) => {
+    Object.entries(BlockProperties).forEach(([blockId, props]) => {
+      const blockType = parseInt(blockId);
       const blockCount = counts.get(blockType) || 0;
-      if (blockCount > 0) {
-        const mesh = new THREE.InstancedMesh(geometry, material, blockCount);
+
+      if (blockCount > 0 && props.solid) {
+        const mesh = new THREE.InstancedMesh(
+          geometry,
+          Array.isArray(props.material) ? props.material : props.material,
+          blockCount
+        );
         mesh.castShadow = true;
         mesh.receiveShadow = true;
 
@@ -76,7 +67,9 @@ export class WorldRenderer {
   public dispose() {
     this.meshes.forEach((mesh) => {
       mesh.geometry.dispose();
-      if (mesh.material instanceof THREE.Material) {
+      if (Array.isArray(mesh.material)) {
+        mesh.material.forEach((material) => material.dispose());
+      } else if (mesh.material instanceof THREE.Material) {
         mesh.material.dispose();
       }
       this.scene.remove(mesh);
