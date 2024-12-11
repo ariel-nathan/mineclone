@@ -36,36 +36,34 @@ export class WorldRenderer {
     const geometry = new THREE.BoxGeometry(1, 1, 1);
     const matrix = new THREE.Matrix4();
 
+    // Get visible blocks
+    const { positions, ids, count } = this.world.getVisibleBlocks();
+
     // Count instances per material
     const counts = new Map<Block, number>();
-    for (let x = 0; x < this.world.width; x++) {
-      for (let y = 0; y < this.world.height; y++) {
-        for (let z = 0; z < this.world.width; z++) {
-          const block = this.world.getBlock(x, y, z);
-          if (block !== Block.AIR) {
-            counts.set(block, (counts.get(block) || 0) + 1);
-          }
-        }
-      }
+    for (let i = 0; i < count; i++) {
+      const id = ids[i];
+      counts.set(id, (counts.get(id) || 0) + 1);
     }
 
     // Create instanced meshes
-    this.blockMaterials.forEach((material, block) => {
-      const count = counts.get(block) || 0;
-      if (count > 0) {
-        const mesh = new THREE.InstancedMesh(geometry, material, count);
+    this.blockMaterials.forEach((material, blockType) => {
+      const blockCount = counts.get(blockType) || 0;
+      if (blockCount > 0) {
+        const mesh = new THREE.InstancedMesh(geometry, material, blockCount);
         mesh.castShadow = true;
         mesh.receiveShadow = true;
 
         let instanceIndex = 0;
-        for (let x = 0; x < this.world.width; x++) {
-          for (let y = 0; y < this.world.height; y++) {
-            for (let z = 0; z < this.world.width; z++) {
-              if (this.world.getBlock(x, y, z) === block) {
-                matrix.setPosition(x, y, z);
-                mesh.setMatrixAt(instanceIndex++, matrix);
-              }
-            }
+        for (let i = 0; i < count; i++) {
+          if (ids[i] === blockType) {
+            const posIndex = i * 3;
+            matrix.setPosition(
+              positions[posIndex],
+              positions[posIndex + 1],
+              positions[posIndex + 2]
+            );
+            mesh.setMatrixAt(instanceIndex++, matrix);
           }
         }
 
