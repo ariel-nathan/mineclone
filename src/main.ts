@@ -1,7 +1,10 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/Addons.js";
 import Stats from "three/examples/jsm/libs/stats.module.js";
+import { debugControls } from "./lib/ui";
+import { WorldRenderer } from "./render/world-renderer";
 import "./style.css";
+import { World } from "./world";
 
 // Stats setup
 const stats = new Stats();
@@ -18,22 +21,24 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.setAnimationLoop(animate);
 document.body.appendChild(renderer.domElement);
 
+// Scene setup
+const scene = new THREE.Scene();
+
+const world = new World();
+world.generate();
+const worldRenderer = new WorldRenderer(scene, world);
+worldRenderer.render();
+
 // Camera setup
 const camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight
 );
-camera.position.set(5, 5, 5);
+camera.position.set(world.width * 2, world.height * 2, world.width * 2);
 
 // OrbitControls setup
-new OrbitControls(camera, renderer.domElement);
-
-// Scene setup
-const scene = new THREE.Scene();
-const geometry = new THREE.BoxGeometry(1, 1, 1);
-const material = new THREE.MeshLambertMaterial();
-const cube = new THREE.Mesh(geometry, material);
-scene.add(cube);
+const orbitControls = new OrbitControls(camera, renderer.domElement);
+orbitControls.target.set(world.width / 2, world.height / 2, world.width / 2);
 
 // Light setup
 function setupLights() {
@@ -50,19 +55,22 @@ function setupLights() {
   sun.shadow.mapSize = new THREE.Vector2(512, 512);
   scene.add(sun);
 
-  // scene.add(new THREE.CameraHelper(sun.shadow.camera));
-
   const ambient = new THREE.AmbientLight();
   ambient.intensity = 0.1;
   scene.add(ambient);
 }
 setupLights();
 
+// Debug controls
+debugControls(world, worldRenderer);
+
+// Animation loop
 function animate() {
   renderer.render(scene, camera);
   stats.update();
 }
 
+// Resize handler
 window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
