@@ -1,4 +1,4 @@
-MIT No Attribution
+MIT License
 
 Copyright 2024 Ariel Nathan
 
