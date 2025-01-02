@@ -1,3 +1,4 @@
+import { Stats } from "./lib/stats";
 import { debugControls } from "./lib/ui";
 import { GPURenderer } from "./render/gpu-renderer";
 import "./style.css";
@@ -9,6 +10,11 @@ async function main() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
   document.body.appendChild(canvas);
+
+  // Stats setup
+  const stats = new Stats();
+  stats.showPanel(0);
+  document.body.appendChild(stats.dom);
 
   // Initialize renderer
   const renderer = new GPURenderer(canvas);
@@ -69,7 +75,9 @@ async function main() {
 
   // Animation loop
   function animate() {
+    stats.begin();
     renderer.render();
+    stats.end();
     requestAnimationFrame(animate);
   }
   animate();

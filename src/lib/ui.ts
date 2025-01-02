@@ -5,7 +5,9 @@ import { Block, BlockProperties, GenerativeBlocks } from "../world/block";
 
 // Debug UI controls for world generation parameters
 export function debugControls(world: World, renderer: GPURenderer) {
-  const gui = new GUI();
+  const gui = new GUI({
+    title: "Debug",
+  });
 
   // World parameters
   const worldFolder = gui.addFolder("World").close();
