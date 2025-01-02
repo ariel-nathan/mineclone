@@ -1,80 +1,83 @@
-import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/Addons.js";
-import Stats from "three/examples/jsm/libs/stats.module.js";
 import { debugControls } from "./lib/ui";
-import { WorldRenderer } from "./render/world-renderer";
+import { GPURenderer } from "./render/gpu-renderer";
 import "./style.css";
 import { World } from "./world";
 
-// Stats setup
-const stats = new Stats();
-stats.showPanel(0);
-document.body.appendChild(stats.dom);
+async function main() {
+  // Create canvas
+  const canvas = document.createElement("canvas");
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  document.body.appendChild(canvas);
 
-// Renderer setup
-const renderer = new THREE.WebGLRenderer();
-renderer.setPixelRatio(window.devicePixelRatio);
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setClearColor(0x80a0e0);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.setAnimationLoop(animate);
-document.body.appendChild(renderer.domElement);
+  // Initialize renderer
+  const renderer = new GPURenderer(canvas);
+  const initialized = await renderer.initialize();
 
-// Scene setup
-const scene = new THREE.Scene();
+  if (!initialized) {
+    document.body.innerHTML = "WebGPU not supported or failed to initialize";
+    return;
+  }
 
-const world = new World();
-world.generate();
-const worldRenderer = new WorldRenderer(scene, world);
-worldRenderer.render();
+  // Create world
+  const world = new World();
+  world.generate();
 
-// Camera setup
-const camera = new THREE.PerspectiveCamera(
-  75,
-  window.innerWidth / window.innerHeight
-);
-camera.position.set(world.width * 2, world.height * 2, world.width * 2);
+  // Update renderer with world data
+  renderer.updateWorld(world);
 
-// OrbitControls setup
-const orbitControls = new OrbitControls(camera, renderer.domElement);
-orbitControls.target.set(world.width / 2, world.height / 2, world.width / 2);
+  // Set up camera position
+  const camera = renderer.cameraController;
+  camera.setTarget(world.width / 2, world.height / 2, world.width / 2);
+  camera.zoom(world.width); // Initial zoom based on world size
 
-// Light setup
-function setupLights() {
-  const sun = new THREE.DirectionalLight();
-  sun.position.set(50, 50, 50);
-  sun.castShadow = true;
-  sun.shadow.camera.left = -100;
-  sun.shadow.camera.right = 100;
-  sun.shadow.camera.top = 100;
-  sun.shadow.camera.bottom = -100;
-  sun.shadow.camera.near = 0.1;
-  sun.shadow.camera.far = 100;
-  sun.shadow.bias = -0.0005;
-  sun.shadow.mapSize = new THREE.Vector2(512, 512);
-  scene.add(sun);
+  // Add UI controls
+  debugControls(world, renderer);
 
-  // scene.add(new THREE.CameraHelper(sun.shadow.camera));
+  // Handle mouse controls
+  let isMouseDown = false;
+  let lastX = 0;
+  let lastY = 0;
 
-  const ambient = new THREE.AmbientLight();
-  ambient.intensity = 0.1;
-  scene.add(ambient);
+  canvas.addEventListener("mousedown", (e) => {
+    isMouseDown = true;
+    lastX = e.clientX;
+    lastY = e.clientY;
+  });
+
+  canvas.addEventListener("mouseup", () => {
+    isMouseDown = false;
+  });
+
+  canvas.addEventListener("mousemove", (e) => {
+    if (!isMouseDown) return;
+
+    const deltaX = e.clientX - lastX;
+    const deltaY = e.clientY - lastY;
+    lastX = e.clientX;
+    lastY = e.clientY;
+
+    const rotationSpeed = 0.01;
+    camera.orbit(deltaX * rotationSpeed, deltaY * rotationSpeed);
+  });
+
+  // Handle zoom with mouse wheel
+  canvas.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    camera.zoom(1 + e.deltaY * 0.001);
+  });
+
+  // Animation loop
+  function animate() {
+    renderer.render();
+    requestAnimationFrame(animate);
+  }
+  animate();
+
+  // Handle resize
+  window.addEventListener("resize", () => {
+    renderer.handleResize();
+  });
 }
-setupLights();
 
-// Debug controls
-debugControls(world, worldRenderer);
-
-// Animation loop
-function animate() {
-  renderer.render(scene, camera);
-  stats.update();
-}
-
-// Resize handler
-window.addEventListener("resize", () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
+main();

@@ -5,14 +5,15 @@ A simple voxel-based world generator and renderer built with Three.js and TypeSc
 ## Getting Started
 
 - Install dependencies:
-  - `bun install`
+  - `pnpm install`
 - Run development server:
-  - `bun dev`
+  - `pnpm dev`
 - Build for production:
-  - `bun build`
+  - `pnpm build`
 
 ## Roadmap
 
+- [ ] WebGPU renderer
 - [ ] World generation
   - [x] Simplex noise
   - [x] Seed

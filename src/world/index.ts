@@ -1,11 +1,11 @@
-import { SimplexNoise } from "three/examples/jsm/Addons.js";
 import { RNG } from "../lib/rng";
+import { SimplexNoise } from "../lib/simplex-noise";
 import { Block, GenerativeBlocks } from "./block";
 
 interface WorldOptions {
-  scale: number;
-  magnitude: number;
-  offset: number;
+  scale: number; // Controls the scale of the terrain
+  magnitude: number; // Controls the height variation
+  offset: number; // Controls the base height
 }
 
 export class World {
@@ -34,7 +34,6 @@ export class World {
     };
     this.world = new Uint8Array(this.width * this.height * this.width);
     this.primaryNoise = new SimplexNoise();
-
     this.initialize();
   }
 
